@@ -1,0 +1,27 @@
+{
+  "browser_action": {
+    "browser_style": true,
+    "default_title": "Batch Bus Booker",
+    "default_popup": "b3.html",
+    "default_icon": {
+      "19": "icons/bus-19.png",
+      "38": "icons/bus-38.png"
+    }
+  },
+  "description": "Batch Bus Booker",
+  "icons": {
+    "48": "icons/bus-48.png",
+    "96": "icons/bus-96.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "batchbusbooker@alextokolyi.com",
+      "strict_min_version": "42.0"
+    }
+  },  
+  "homepage_url": "https://alextokolyi.com/",
+  "manifest_version": 2,
+  "name": "Batch Bus Booker",
+  "version": "1.0",
+  "permissions": ["storage","cookies","*://wellcomegenomecampus.bushub.co.uk/*","tabs"]
+}
