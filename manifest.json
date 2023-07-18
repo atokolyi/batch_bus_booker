@@ -16,7 +16,8 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "batchbusbooker@alextokolyi.com",
-      "strict_min_version": "42.0"
+      "strict_min_version": "42.0",
+      "update_url": "https://alextokolyi.com/bbb/updates.json"
     }
   },  
   "homepage_url": "https://alextokolyi.com/",

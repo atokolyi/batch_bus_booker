@@ -223,18 +223,32 @@ async function makeDays(hText) {
     let year = date.getFullYear();
     let currentDate = `${year}-${month}-${day}`;
     let bDate = `${day}/${month}/${year}`;
+    let dayth = ""
+    switch (day%10) {
+      case 1: 
+        dayth = "st";
+        break;
+      case 2: 
+        dayth = "nd";
+        break;
+      case 3: 
+        dayth = "rd";
+        break;
+      default:
+        dayth = "th";
+    }
     if (date.getDay()!=0 & date.getDay()!=6) {
       // Make a button for each available date
       const createButton = document.createElement('button');
-      createButton.innerText= 'Book ' + weekday[date.getDay()] + " (" + day + ")";
+      createButton.innerText= 'Book ' + weekday[date.getDay()] + " (" + day + dayth + ")";
       createButton.date = currentDate;
       createButton.style.cssText = "width: 50%;text-align: left;";
       if (bDates.includes(bDate)) {
         createButton.disabled = true;
         createButton.innerText= createButton.innerText+" - Done"
       }
-      document.body.appendChild(createButton);
-      document.body.appendChild(document.createElement("br"));
+      document.getElementById("button-div").appendChild(createButton);
+      document.getElementById("button-div").appendChild(document.createElement("br"));
       // Need to give bookdate the hText and tId, the rest it can grab from the elements
       createButton.addEventListener("click", bookDate);
     }

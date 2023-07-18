@@ -1,11 +1,17 @@
 html, body {
   width: 500px;
+  background-color: #282828;
+  color: #fac1ff;
 }
 
 .panel {
-  padding: 5px;
+  padding: 10px;
 }
 
 li {
   margin-bottom: 5px;
+}
+
+.text-section-header {
+  font-size: 130%;
 }
