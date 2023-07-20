@@ -1,7 +1,9 @@
 html, body {
   width: 500px;
-  background-color: #282828;
-  color: #fac1ff;
+  background-image: linear-gradient(to right top, #051937, #004d7a, #008793, #00bf72, #a8eb12);
+  color: #FFFFFF;
+  font-family: "Helvetica";
+  font-weight: bold;
 }
 
 .panel {
