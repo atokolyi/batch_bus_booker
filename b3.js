@@ -210,8 +210,10 @@ async function makeDays(hText) {
   }});
   const data = await response.text();
   let bDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+/g);
+  console.log(bDates);
+  //let exclDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+([\s\S]*)Cancelled/g);
   bDates = bDates.filter((value, index, array) => array.indexOf(value) === index);
-
+  console.log(bDates);
   for (let i=1; i<11; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
@@ -223,6 +225,9 @@ async function makeDays(hText) {
     let year = date.getFullYear();
     let currentDate = `${year}-${month}-${day}`;
     let bDate = `${day}/${month}/${year}`;
+    if (day<10) {
+      bDate = `0${day}/${month}/${year}`;
+    }
     let dayth = ""
     switch (day%10) {
       case 1: 
