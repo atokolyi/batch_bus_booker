@@ -212,8 +212,10 @@ async function makeDays(hText) {
   let bDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+/g);
   console.log(bDates);
   //let exclDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+([\s\S]*)Cancelled/g);
-  bDates = bDates.filter((value, index, array) => array.indexOf(value) === index);
-  console.log(bDates);
+  if (!(bDates===null)) {
+    bDates = bDates.filter((value, index, array) => array.indexOf(value) === index);
+    console.log(bDates);
+  }
   for (let i=1; i<11; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
@@ -248,9 +250,11 @@ async function makeDays(hText) {
       createButton.innerText= 'Book ' + weekday[date.getDay()] + " (" + day + dayth + ")";
       createButton.date = currentDate;
       createButton.style.cssText = "width: 50%;text-align: left;";
-      if (bDates.includes(bDate)) {
-        createButton.disabled = true;
-        createButton.innerText= createButton.innerText+" - Done"
+      if (!(bDates===null)) {
+        if (bDates.includes(bDate)) {
+          createButton.disabled = true;
+          createButton.innerText= createButton.innerText+" - Done"
+        }
       }
       document.getElementById("button-div").appendChild(createButton);
       document.getElementById("button-div").appendChild(document.createElement("br"));
