@@ -226,11 +226,11 @@ async function makeDays(hText) {
   console.log(bDates);
   // let bDates = validDates.match(/[0-9]+\/[0-9]+\/[0-9]+/g);
   //let exclDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+([\s\S]*)Cancelled/g);
-  if (!(bDates === null)) {
+  if (!(bDates===null)) {
     bDates = bDates.filter((value, index, array) => array.indexOf(value) === index);
     console.log(bDates);
   }
-  for (let i = 1; i < 11; i++) {
+  for (let i=1; i<11; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
     let day = date.getDate();
