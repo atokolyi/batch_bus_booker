@@ -8,7 +8,7 @@ function restoreOptions(sType) {
 function bookDate(evt) {
   // Fetch and store the values we're using
   evt.currentTarget.disabled = true;
-  evt.currentTarget.innerText= evt.currentTarget.innerText+" - Done"
+  evt.currentTarget.innerText = evt.currentTarget.innerText + " - Done"
   let sangStop = "BUSHUBd6ZTW0SS";
   let toBoth = document.getElementById("to-sang").value;
   let toLine = toBoth.split("_")[0];
@@ -35,10 +35,9 @@ function bookDate(evt) {
   // Check how many tickets left, error out if not enough
   // Convert day of week to next date
   let bDate = evt.currentTarget.date;
-  rData = '{"objects":[{"lineId":'+toLine+',"date":"' + 
-    bDate + 'T'+pTime+':00","pickupAtcocode":"'+toStop+'","dropoffAtcocode":"'+sangStop+'","direction":"Inbound","passengers":1,"tickets":['+tId+'],"fares":[]},{"lineId":'+fromLine+',"date":"' + 
-    bDate + 'T'+dTime+':00","pickupAtcocode":"'+sangStop+'","dropoffAtcocode":"'+fromStop+'","direction":"Outbound","passengers":1,"tickets":['+tId+'],"fares":[]}]}'
-  
+  rData = '{"objects":[{"lineId":' + toLine + ',"date":"' +
+    bDate + 'T' + pTime + ':00","pickupAtcocode":"' + toStop + '","dropoffAtcocode":"' + sangStop + '","direction":"Inbound","passengers":1,"tickets":[' + tId + '],"fares":[]},{"lineId":' + fromLine + ',"date":"' +
+    bDate + 'T' + dTime + ':00","pickupAtcocode":"' + sangStop + '","dropoffAtcocode":"' + fromStop + '","direction":"Outbound","passengers":1,"tickets":[' + tId + '],"fares":[]}]}'
   const response = fetch("https://wellcomegenomecampus.bushub.co.uk/booking", {
     method: 'POST',
     headers: {
@@ -55,10 +54,10 @@ function bookDate(evt) {
       'Sec-Fetch-Dest': 'empty',
       'Sec-Fetch-Mode': 'cors',
       'Sec-Fetch-Site': 'same-origin',
-      'TE': 'trailers' 
+      'TE': 'trailers'
     },
     body: rData,
-    });
+  });
 }
 
 async function makeStops() {
@@ -115,7 +114,7 @@ async function makeStops() {
   ["EC_Coldham's Ln, Nr Sainsbury's - E", '85314_0500CCITY040'],
   ["EC_St Andrew's Church, High St - S", '85314_0500CCITY353'],
   ["EC_Fulbourn Rd, Queen Edith's Way (Robin Hood PH) - E",
-   '85314_0500CCITY221'],
+    '85314_0500CCITY221'],
   ["EC_C'bridge Rd, Babraham Rd - E", '85314_0500SFULB006'],
   ['NC_Madingley Rd, British Antarctic Survey - E (RQ)', '85334_0500CCITY142'],
   ["NC_Madingley Rd, Storey's Way - E (RQ)", '85334_BUSHUBYHAuXOEU'],
@@ -150,39 +149,44 @@ async function getTicket(hText) {
     method: 'GET',
     headers: {
       'Cookie': hText
-  }});
+    }
+  });
   const data = await response.json();
   userID = data.UserId;
   //return data;
-  const response2 = await fetch("https://wellcomegenomecampus.bushub.co.uk/api/tickets/mytickets?userId="+userID, {
+  const response2 = await fetch("https://wellcomegenomecampus.bushub.co.uk/api/tickets/mytickets?userId=" + userID, {
     method: 'GET',
     headers: {
       'Cookie': hText
-  }});
+    }
+  });
   const data2 = await response2.json();
   //tId = data2.Tickets[0].Id;
   // If only one ticket, return that
   // If multiple, return the one with max ActivationsRemaining
-  if (data2.Tickets.length>0) {
+  if (data2.Tickets.length > 0) {
     let tId = -1;
     let AR = -1;
     for (let i = 0; i < data2.Tickets.length; i++) {
-      if (data2.Tickets[i].ActivationsRemaining>AR) {
+      let ticket_expiry = data2.Tickets[i].ValidUntil;
+      let ticket_expiry_date = new Date(ticket_expiry);
+      var now = new Date();
+      if (data2.Tickets[i].ActivationsRemaining > AR & now < ticket_expiry_date) {
         tId = data2.Tickets[i].Id;
         AR = data2.Tickets[i].ActivationsRemaining;
       }
-    } 
-    return [tId,AR];
+    }
+    return [tId, AR];
   } else {
-    return ["Error","Error"];
+    return ["Error", "Error"];
   }
-  
+
 }
 
 async function pullToken() {
-  tabs = await browser.tabs.query({currentWindow: true, active: true});
+  tabs = await browser.tabs.query({ currentWindow: true, active: true });
   let tab = tabs.pop();
-  let cookies = await browser.cookies.getAll({url: tab.url});
+  let cookies = await browser.cookies.getAll({ url: tab.url });
   let hText = "";
   let first = true;
   if (cookies.length > 0) {
@@ -194,63 +198,72 @@ async function pullToken() {
       hText = hText + cookie.name + "=" + cookie.value;
     }
     return hText;
-    } else {
-      return "Error";
+  } else {
+    return "Error";
   }
 }
 
 async function makeDays(hText) {
   // Store checked status
-  const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   // Get dates of existing bookings to make list and grey out button if same
   const response = await fetch("https://wellcomegenomecampus.bushub.co.uk/bookings?take=1000", {
     method: 'GET',
     headers: {
       'Cookie': hText
-  }});
-  const data = await response.text();
-  let bDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+/g);
+    }
+  });
+  const htmlContent = await response.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlContent, 'text/html');
+  const trElements = doc.querySelectorAll('tr[class=""]');
+  let bDates = Array.from(trElements)
+    .filter(tr => !tr.textContent.includes('Cancelled'))
+    .map(tr => {
+      const dateElement = tr.querySelector('td:nth-child(2'); // Assuming date is in the second <td>
+      return dateElement.textContent.trim(); // Extract and trim the date
+    });
   console.log(bDates);
+  // let bDates = validDates.match(/[0-9]+\/[0-9]+\/[0-9]+/g);
   //let exclDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+([\s\S]*)Cancelled/g);
   bDates = bDates.filter((value, index, array) => array.indexOf(value) === index);
-  console.log(bDates);
-  for (let i=1; i<11; i++) {
+  for (let i = 1; i < 11; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
     let day = date.getDate();
     let month = date.getMonth() + 1;
-    if (month<10) {
-      month="0"+month;
+    if (month < 10) {
+      month = "0" + month;
     }
     let year = date.getFullYear();
     let currentDate = `${year}-${month}-${day}`;
     let bDate = `${day}/${month}/${year}`;
-    if (day<10) {
+    if (day < 10) {
       bDate = `0${day}/${month}/${year}`;
     }
     let dayth = ""
-    switch (day%10) {
-      case 1: 
+    switch (day % 10) {
+      case 1:
         dayth = "st";
         break;
-      case 2: 
+      case 2:
         dayth = "nd";
         break;
-      case 3: 
+      case 3:
         dayth = "rd";
         break;
       default:
         dayth = "th";
     }
-    if (date.getDay()!=0 & date.getDay()!=6) {
+    if (date.getDay() != 0 & date.getDay() != 6) {
       // Make a button for each available date
       const createButton = document.createElement('button');
-      createButton.innerText= 'Book ' + weekday[date.getDay()] + " (" + day + dayth + ")";
+      createButton.innerText = 'Book ' + weekday[date.getDay()] + " (" + day + dayth + ")";
       createButton.date = currentDate;
       createButton.style.cssText = "width: 50%;text-align: left;";
       if (bDates.includes(bDate)) {
         createButton.disabled = true;
-        createButton.innerText= createButton.innerText+" - Done"
+        createButton.innerText = createButton.innerText + " - Done"
       }
       document.getElementById("button-div").appendChild(createButton);
       document.getElementById("button-div").appendChild(document.createElement("br"));
@@ -258,9 +271,9 @@ async function makeDays(hText) {
       createButton.addEventListener("click", bookDate);
     }
   }
-  
 
-  
+
+
 }
 
 async function doAll() {
@@ -274,7 +287,7 @@ async function doAll() {
   cookieList.appendChild(li);
   // Get the cookies
   hText = await pullToken();
-  if (hText=="Error") {
+  if (hText == "Error") {
     li.appendChild(document.createTextNode("Error getting cookies"));
     return 1;
   } else {
@@ -286,14 +299,14 @@ async function doAll() {
   cookieList.appendChild(li);
   // Get the ticket
   tId = await getTicket(hText);
-  if (tId[0]=="Error") {
+  if (tId[0] == "Error") {
     li.appendChild(document.createTextNode("Failed, purchase a 40x ticket."))
     return 1;
   } else {
-    li.appendChild(document.createTextNode("Done! ("+tId[1]+" remaining)"))
+    li.appendChild(document.createTextNode("Done! (" + tId[1] + " remaining)"))
   }
   tId = tId[0];
-  
+
   makeStops();
   // If current values stored, get them and fill the elements
   restoreOptions("to-sang");
