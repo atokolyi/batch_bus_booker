@@ -1,6 +1,6 @@
 # Batch Bus Booker (B<sup>3</sup>)
 
-For people who (try to) get the same bus at the same time and don't enjoy busywork.
+For people who (try to) get the same bus at the same time and don't enjoy bus-ywork.
 
 ### Installation instructions (Firefox)
 Just [download](https://github.com/atokolyi/batch_bus_booker/releases/download/1.0.0/b3.xpi) it, should prompt for auto install, pin to toolbar to make access quicker.
