@@ -5,10 +5,14 @@ function restoreOptions(sType) {
   });
 }
 
+// Function to check if the time is before 12:00 (noon)
+function isBeforeNoon(time) {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours < 12 || (hours === 12 && minutes === 0);
+}
+
 function bookDate(evt) {
   // Fetch and store the values we're using
-  evt.currentTarget.disabled = true;
-  evt.currentTarget.innerText = evt.currentTarget.innerText + " - Done"
   let sangStop = "BUSHUBd6ZTW0SS";
   let toBoth = document.getElementById("to-sang").value;
   let toLine = toBoth.split("_")[0];
@@ -35,9 +39,45 @@ function bookDate(evt) {
   // Check how many tickets left, error out if not enough
   // Convert day of week to next date
   let bDate = evt.currentTarget.date;
-  rData = '{"objects":[{"lineId":' + toLine + ',"date":"' +
-    bDate + 'T' + pTime + ':00","pickupAtcocode":"' + toStop + '","dropoffAtcocode":"' + sangStop + '","direction":"Inbound","passengers":1,"tickets":[' + tId + '],"fares":[]},{"lineId":' + fromLine + ',"date":"' +
-    bDate + 'T' + dTime + ':00","pickupAtcocode":"' + sangStop + '","dropoffAtcocode":"' + fromStop + '","direction":"Outbound","passengers":1,"tickets":[' + tId + '],"fares":[]}]}'
+  let rData = '{"objects":[';
+
+  // Grey out relevant buttons 
+  const buttons = document.querySelectorAll('button');
+  buttons.forEach(button => {
+    if (button !== evt.currentTarget && button.date === bDate) {
+      if (evt.currentTarget.mode === 'am' && button.mode === 'both') {
+        if (!button.disabled) {
+          button.disabled = true;
+          button.innerText += " - Done";
+        }
+      } else if (evt.currentTarget.mode === 'pm' && button.mode === 'both') {
+        if (!button.disabled) {
+          button.disabled = true;
+          button.innerText += " - Done";
+        }
+      } else if (evt.currentTarget.mode === 'both') {
+        if (!button.disabled) {
+          button.disabled = true;
+        }
+      }
+    }
+  });
+
+  if (evt.currentTarget.mode === 'am') {
+    evt.currentTarget.disabled = true;
+    rData += '{"lineId":' + toLine + ',"date":"' +
+      bDate + 'T' + pTime + ':00","pickupAtcocode":"' + toStop + '","dropoffAtcocode":"' + sangStop + '","direction":"Inbound","passengers":1,"tickets":[' + tId + '],"fares":[]}]}';
+  } else if (evt.currentTarget.mode === 'pm') {
+    evt.currentTarget.disabled = true;
+    rData += '{"lineId":' + fromLine + ',"date":"' +
+      bDate + 'T' + dTime + ':00","pickupAtcocode":"' + sangStop + '","dropoffAtcocode":"' + fromStop + '","direction":"Outbound","passengers":1,"tickets":[' + tId + '],"fares":[]}]}';
+  } else {
+    evt.currentTarget.disabled = true;
+    evt.currentTarget.innerText = evt.currentTarget.innerText + " - Done";
+    rData += '{"lineId":' + toLine + ',"date":"' +
+      bDate + 'T' + pTime + ':00","pickupAtcocode":"' + toStop + '","dropoffAtcocode":"' + sangStop + '","direction":"Inbound","passengers":1,"tickets":[' + tId + '],"fares":[]},{"lineId":' + fromLine + ',"date":"' +
+      bDate + 'T' + dTime + ':00","pickupAtcocode":"' + sangStop + '","dropoffAtcocode":"' + fromStop + '","direction":"Outbound","passengers":1,"tickets":[' + tId + '],"fares":[]}]}';
+  }
   const response = fetch("https://wellcomegenomecampus.bushub.co.uk/booking", {
     method: 'POST',
     headers: {
@@ -203,6 +243,39 @@ async function pullToken() {
   }
 }
 
+
+
+function createBookingButton(text, date, slot = '', width = 50, mode = 'both') {
+  const button = document.createElement('button');
+  button.innerText = text;
+  button.date = date;
+  button.slot = slot; // optional slot parameter for morning/afternoon buttons
+  button.style.cssText = "width: " + width + "%; text-align: left;";
+  button.addEventListener("click", bookDate, false);
+  button.mode = mode;
+  return button;
+}
+
+function disableButton(button) {
+  button.disabled = true;
+}
+
+function getDaySuffix(day) {
+  if (day >= 11 && day <= 13) {
+    return 'th';
+  }
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+}
+
 async function makeDays(hText) {
   // Store checked status
   const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -217,69 +290,69 @@ async function makeDays(hText) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlContent, 'text/html');
   const trElements = doc.querySelectorAll('tr[class=""]');
-  let bDates = Array.from(trElements)
-    .filter(tr => !tr.textContent.includes('Cancelled'))
-    .map(tr => {
-      const dateElement = tr.querySelector('td:nth-child(2'); // Assuming date is in the second <td>
-      return dateElement.textContent.trim(); // Extract and trim the date
-    });
-  console.log(bDates);
-  // let bDates = validDates.match(/[0-9]+\/[0-9]+\/[0-9]+/g);
-  //let exclDates = data.match(/[0-9]+\/[0-9]+\/[0-9]+([\s\S]*)Cancelled/g);
-  if (!(bDates===null)) {
-    bDates = bDates.filter((value, index, array) => array.indexOf(value) === index);
-    console.log(bDates);
-  }
-  for (let i=1; i<11; i++) {
+
+  // Create a Map to store dates and their booked slots (morning or afternoon)
+  const bDates = new Map();
+
+  // Iterate through <tr> elements to filter out dates containing "Cancelled"
+  trElements.forEach(tr => {
+    const dateElement = tr.querySelector('td:nth-child(2)'); // Assuming date is in the second <td>
+    const timeElement = tr.querySelector('td:nth-child(3)'); // Assuming time is in the third <td>
+    const date = dateElement.textContent.trim();
+    const time = timeElement.textContent.trim();
+    // console.log(time); gives 07:20, 17:15, etc.
+    // Check if the date doesn't contain "Cancelled"
+    if (!tr.textContent.includes('Cancelled')) {
+      // If the date isn't in the map, initialize it with empty slots for morning and afternoon
+      if (!bDates.has(date)) {
+        bDates.set(date, {
+          morning: false,
+          afternoon: false
+        });
+      }
+      // Determine if it's morning or afternoon and mark the slot as booked
+      if (isBeforeNoon(time)) {
+        bDates.get(date).morning = true;
+      } else {
+        bDates.get(date).afternoon = true;
+      }
+    }
+  });
+  for (let i = 1; i < 11; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
-    let day = date.getDate();
-    let month = date.getMonth() + 1;
-    if (month < 10) {
-      month = "0" + month;
-    }
-    let year = date.getFullYear();
-    let currentDate = `${year}-${month}-${day}`;
-    let bDate = `${day}/${month}/${year}`;
-    if (day < 10) {
-      bDate = `0${day}/${month}/${year}`;
-    }
-    let dayth = ""
-    switch (day % 10) {
-      case 1:
-        dayth = "st";
-        break;
-      case 2:
-        dayth = "nd";
-        break;
-      case 3:
-        dayth = "rd";
-        break;
-      default:
-        dayth = "th";
-    }
+    const day = date.getDate();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const evtDate = `${year}-${month}-${day}`;
+    const currentDate = `${day}/${month}/${year}`;
+    const dayth = getDaySuffix(day);
     if (date.getDay() != 0 & date.getDay() != 6) {
       // Make a button for each available date
-      const createButton = document.createElement('button');
-      createButton.innerText = 'Book ' + weekday[date.getDay()] + " (" + day + dayth + ")";
-      createButton.date = currentDate;
-      createButton.style.cssText = "width: 50%;text-align: left;";
-      if (!(bDates === null)) {
-        if (bDates.includes(bDate)) {
-          createButton.disabled = true;
-          createButton.innerText = createButton.innerText + " - Done"
+      const createButton = createBookingButton('Book ' + weekday[date.getDay()] + " (" + day + dayth + ")", evtDate, mode = 'both');
+      const morningButton = createBookingButton('AM', evtDate, 'Morning', 8, mode = 'am');
+      const afternoonButton = createBookingButton('PM', evtDate, 'Afternoon', 8, mode = 'pm');
+      if (bDates.has(currentDate)) {
+        const slots = bDates.get(currentDate);
+        if (slots.morning) {
+          disableButton(morningButton);
+        }
+        if (slots.afternoon) {
+          disableButton(afternoonButton);
+        }
+        if (slots.morning || slots.afternoon) {
+          disableButton(createButton);
+          createButton.innerText += " - Done";
         }
       }
       document.getElementById("button-div").appendChild(createButton);
+      document.getElementById("button-div").appendChild(morningButton);
+      document.getElementById("button-div").appendChild(afternoonButton);
       document.getElementById("button-div").appendChild(document.createElement("br"));
-      // Need to give bookdate the hText and tId, the rest it can grab from the elements
-      createButton.addEventListener("click", bookDate);
     }
   }
-
-
-
 }
+
 
 async function doAll() {
   //set the header of the panel
