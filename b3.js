@@ -318,6 +318,7 @@ async function makeDays(hText) {
       }
     }
   });
+  console.log(bDates);
   for (let i = 1; i < 11; i++) {
     const date = new Date();
     date.setDate(date.getDate() + i);
@@ -325,15 +326,18 @@ async function makeDays(hText) {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     const evtDate = `${year}-${month}-${day}`;
-    const currentDate = `${day}/${month}/${year}`;
-    const dayth = getDaySuffix(day);
     if (date.getDay() != 0 & date.getDay() != 6) {
+      const dayP = day.toString().padStart(2,'0');
+      const currentDate = `${dayP}/${month}/${year}`;
+      const dayth = getDaySuffix(day);
       // Make a button for each available date
       const createButton = createBookingButton('Book ' + weekday[date.getDay()] + " (" + day + dayth + ")", evtDate, mode = 'both');
       const morningButton = createBookingButton('AM', evtDate, 'Morning', 8, mode = 'am');
       const afternoonButton = createBookingButton('PM', evtDate, 'Afternoon', 8, mode = 'pm');
+      console.log(currentDate);
       if (bDates.has(currentDate)) {
         const slots = bDates.get(currentDate);
+        console.log(slots);
         if (slots.morning) {
           disableButton(morningButton);
         }
